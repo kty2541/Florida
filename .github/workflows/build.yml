@@ -1,5 +1,10 @@
 name: Florida
 
+# 릴리스 생성/삭제·자산 업로드를 위해 GITHUB_TOKEN 에 쓰기 권한 부여.
+# (없으면 create_release 에서 "Resource not accessible by integration" 403)
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: "0 9/12 * * *"
