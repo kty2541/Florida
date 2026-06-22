@@ -1,7 +1,6 @@
 name: Florida
 
-# 릴리스 생성/삭제·자산 업로드를 위해 GITHUB_TOKEN 에 쓰기 권한 부여.
-# (없으면 create_release 에서 "Resource not accessible by integration" 403)
+# 릴리스 생성/삭제·자산 업로드를 위해 GITHUB_TOKEN 에 쓰기 권한 부여(create_release 403 방지).
 permissions:
   contents: write
 
@@ -23,9 +22,20 @@ jobs:
       FRIDA_VERSION: ${{ steps.pullFridaLatestRelease.outputs.FRIDA_VERSION }}
       ALREADY_RELEASE: ${{ steps.checkReleaseVersion.outputs.ALREADY_RELEASE }}
     steps:
-      - name: Set Frida Version (pinned 17.9.10)
+      - name: Pull Frida Latest Release
         id: pullFridaLatestRelease
-        run: echo "FRIDA_VERSION=17.9.10" >> "$GITHUB_OUTPUT"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const releaseResponse = await github.repos.getLatestRelease({
+              owner: 'frida',
+              repo: 'frida',
+            })
+            const {
+              data: { tag_name: ver }
+            } = releaseResponse;
+            core.setOutput('FRIDA_VERSION', ver);
 
       - name: Split Repository Name
         id: split_name
@@ -139,7 +149,7 @@ jobs:
         export ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}
         echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
 
-        git clone --recurse-submodules --branch 17.9.10 https://github.com/frida/frida
+        git clone --recurse-submodules https://github.com/frida/frida
         cd frida
         for path in ../patches/*
         do
